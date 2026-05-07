@@ -45,13 +45,14 @@ kotlin {
         }
 
         commonMain.dependencies {
-            // Compose UI
+            // Compose UI + Material Icons (core set covers all icons we use)
             implementation(libs.compose.runtime)
             implementation(libs.compose.foundation)
             implementation(libs.compose.material3)
             implementation(libs.compose.ui)
             implementation(libs.compose.components.resources)
             implementation(libs.compose.uiToolingPreview)
+            implementation(libs.compose.material.icons.extended)
 
             // Lifecycle & ViewModel
             implementation(libs.androidx.lifecycle.viewmodelCompose)
