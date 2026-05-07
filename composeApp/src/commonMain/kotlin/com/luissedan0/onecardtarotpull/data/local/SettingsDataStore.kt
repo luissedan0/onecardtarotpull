@@ -22,6 +22,14 @@ class SettingsDataStore(private val dataStore: DataStore<Preferences>) {
     companion object {
         private val KEY_AUTO_SAVE = booleanPreferencesKey("auto_save_enabled")
         private val KEY_CARD_BACK_PATH = stringPreferencesKey("custom_card_back_path")
+
+        /**
+         * Stores the [AppColorTheme.name] of the selected palette.
+         * Absent = use default (Mystical). Parsed back via [AppColorTheme.fromName].
+         *
+         * Added in Phase 9; wired to UI in Phase 12 (Settings theme selector).
+         */
+        private val KEY_COLOR_THEME = stringPreferencesKey("color_theme")
     }
 
     /**
@@ -63,5 +71,23 @@ class SettingsDataStore(private val dataStore: DataStore<Preferences>) {
                 prefs.remove(KEY_CARD_BACK_PATH)
             }
         }
+    }
+
+    /**
+     * Emits the stored [AppColorTheme] name, or `null` when none has been persisted
+     * (caller should default to [AppColorTheme.Mystical] via [AppColorTheme.fromName]).
+     *
+     * Wired to [SettingsViewModel] and [App] in Phase 12.
+     */
+    val colorThemeName: Flow<String?> = dataStore.data
+        .catch { e ->
+            if (e is IOException) emit(emptyPreferences())
+            else throw e
+        }
+        .map { prefs -> prefs[KEY_COLOR_THEME] }
+
+    /** Persists the selected palette by its [AppColorTheme.name]. */
+    suspend fun setColorThemeName(name: String) {
+        dataStore.edit { prefs -> prefs[KEY_COLOR_THEME] = name }
     }
 }
