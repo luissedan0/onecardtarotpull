@@ -679,3 +679,37 @@ All 5 model files created under `commonMain/.../data/model/`. Key design decisio
 ---
 
 *End of Session 8*
+
+---
+
+## Session 9 — May 7, 2026
+
+### User Input
+
+> Implement Phase 8
+
+### AI Reasoning & Decisions
+
+**Navigation model**: Tabs (PullCard / Journal) live as local `mutableStateOf` inside `HomeScreen`'s Scaffold — NOT as separate NavGraph destinations. This avoids multi-back-stack complexity while keeping the NavGraph flat (3 destinations: Home, Settings, Details).
+
+**Type-safe routes**: Used `@Serializable sealed interface AppRoutes` with Navigation Compose 2.9.x `composable<T>` and `toRoute<T>()`. This means route parameters (`cardId`, `isReversed`) are passed as typed values, not URL-encoded strings.
+
+**Material Icons**: `compose.materialIconsExtended` is deprecated in JetBrains Compose 1.8+ (pinned to 1.7.3). Added it as an explicit catalog entry `materialIcons = "1.7.3"`. Phase 9 (theming) will evaluate migrating to Material Symbols (vector resources).
+
+**BackHandler**: `androidx.activity.compose.BackHandler` is Android-only and fails in `commonMain` on Kotlin/Native. Since iOS has no hardware back button at the root level, this is an Android-only concern. Deferred to Phase 14 with a `expect/actual` pattern (androidMain wraps BackHandler, iosMain is no-op).
+
+### Phase 8 — Completed Items
+
+- [x] **8.1** `AppRoutes` — `@Serializable sealed interface` with `Home`, `Settings`, `Details(cardId, isReversed)`
+- [x] **8.2** `AppNavHost` — `NavHost` with 3 type-safe `composable<T>` destinations
+- [x] **8.3** `BottomNavItem` — sealed class `PullCard` / `Journal` with `Icons.*.Star` and `Icons.AutoMirrored.*.List`
+- [x] **8.4** `BottomNavigationBar` — Material3 `NavigationBar` with filled/outlined icon swap on selection
+- [x] **8.5** Bottom nav wiring — `rememberSaveable { mutableStateOf(PullCard) }` in `HomeScreen`; `HomeTopBar` title tracks selected tab; navigation to `Settings` via `navController.navigate(AppRoutes.Settings)`
+- [x] Placeholder screens: `HomeScreen`, `JournalScreen` (stub), `SettingsScreen`, `DetailsScreen`
+- [x] `App.kt` — replaced boilerplate with `AppNavHost()` inside `MaterialTheme`
+- [x] Build verified — Android ✅ iOS Simulator ✅ — zero warnings
+- [x] Committed as `feat: Phase 8 — Navigation scaffold` (956b014)
+
+---
+
+*End of Session 9*
