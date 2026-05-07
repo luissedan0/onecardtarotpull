@@ -76,7 +76,7 @@ class TarotDeckJsonTest {
         assertTrue(!ace.isMajorArcana)
         assertEquals(1, ace.number)
         assertNotNull(ace.suit)
-        assertEquals("WANDS", ace.suit?.name)
+        assertEquals("WANDS", ace.suit!!.name)
         assertEquals(listOf("creation", "willpower", "inspiration"), ace.keywords)
         assertTrue(ace.meaningUpright.isNotBlank())
         assertTrue(ace.meaningReversed.isNotBlank())
