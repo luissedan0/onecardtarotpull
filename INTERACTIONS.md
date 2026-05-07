@@ -600,3 +600,45 @@ All 5 model files created under `commonMain/.../data/model/`. Key design decisio
 ---
 
 *End of Session 6*
+
+---
+
+## Session 7 — May 7, 2026
+
+### User Input
+
+> Implement Phase 6
+
+### AI Reasoning & Decisions
+
+**Interface pattern chosen**: Plain `interface` in `commonMain` (not `expect interface`) — since the interface contract is identical on both platforms, expect/actual adds no value; Koin binds `HapticFeedback`, `ImagePicker`, and `ShareHandler` to their platform-specific implementations in the upcoming `androidModule` / `iosModule` (Phase 7).
+
+**Android `HapticFeedback`**: Used `VibrationEffect` API directly from `Context` (no `View` reference needed), with three API-level branches: `EFFECT_HEAVY_CLICK` (API 29+), `createOneShot` (API 26-28), deprecated `vibrate(Long)` (API 24-25). Added `android.permission.VIBRATE` to AndroidManifest.
+
+**Android `ImagePicker`**: `ActivityResultContracts.PickVisualMedia` must be registered during Activity `onCreate`. Used `AndroidImagePickerHelper` singleton as a bridge: `MainActivity.registerForActivityResult()` stores the launcher; `ImagePickerImpl` calls `AndroidImagePickerHelper.launch()` which stores the pending callback and triggers the launcher. The Activity callback forwards the selected `Uri` → bytes via `ContentResolver`.
+
+**Android `ShareHandler`**: Simple `Intent.ACTION_SEND` chooser with `FLAG_ACTIVITY_NEW_TASK` (required for starting an Activity from a non-Activity `Context`).
+
+**iOS `HapticFeedback`**: `UIImpactFeedbackGenerator(.heavy)` — straightforward, no ObjC subclassing needed.
+
+**iOS `ShareHandler`**: `UIActivityViewController` presented from `UIApplication.sharedApplication.keyWindow?.rootViewController`. No ObjC subclassing needed.
+
+**iOS `ImagePicker` — investigation and decision**:
+- Implementing `PHPickerViewController` requires a Kotlin class that inherits `NSObject` and conforms to `PHPickerViewControllerDelegateProtocol`.
+- In Kotlin/Native 2.3.21, `import platform.Foundation.NSObject` resolves at the import level but `platform.Foundation.NSObject` is unresolvable as a SUPERCLASS in class declarations, regardless of `@BetaInteropApi`, `@ExperimentalForeignApi`, or `@ExperimentalNativeApi` opt-ins.
+- Confirmed via binary klib inspection: `NSObject` IS in `platform.Foundation`'s 00/01_Foundation.knm files; the restriction is at the Kotlin compiler resolution layer, not the klib.
+- **Decision**: Implement as a documented stub returning `null`. The recommended Phase 13 implementation uses a **Swift Bridge** pattern: a `@objc public class ImagePickerBridge` in Swift (in `iosApp/`) presents the `PHPickerViewController` and calls back into Kotlin via a completion block. This is the canonical approach for ObjC-delegate-heavy UIKit APIs in KMP 2.x.
+
+### Phase 6 — Completed Items
+
+- [x] **6.1** `HapticFeedback` interface (commonMain) + Android `HapticFeedbackImpl` + iOS `HapticFeedbackImpl`
+- [x] **6.2** `ImagePicker` interface (commonMain) + Android `ImagePickerImpl` + `AndroidImagePickerHelper` + iOS stub `ImagePickerImpl` (Swift Bridge deferred to Phase 13)
+- [x] **6.3** `ShareHandler` interface (commonMain) + Android `ShareHandlerImpl` + iOS `ShareHandlerImpl`
+- [x] `AndroidManifest.xml` — `VIBRATE` permission added
+- [x] `MainActivity.kt` — `PickVisualMedia` launcher registered and wired to `AndroidImagePickerHelper`
+- [x] Build verified — Android ✅ iOS Simulator ✅
+- [x] Committed as `feat: implement Phase 6 — platform-specific HapticFeedback, ImagePicker, ShareHandler`
+
+---
+
+*End of Session 7*
