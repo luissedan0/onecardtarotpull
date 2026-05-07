@@ -9,14 +9,19 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
 import com.luissedan0.onecardtarotpull.platform.AndroidImagePickerHelper
 
+/**
+ * Single Activity host for the Compose Multiplatform UI.
+ *
+ * Koin DI is started in [TarotApp.onCreate] (runs before this Activity).
+ * This class is only responsible for:
+ * 1. Registering the photo-picker [ActivityResultLauncher] (must happen before STARTED).
+ * 2. Hosting the Compose content tree.
+ */
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
-        // Initialise before Koin or any factory is invoked
-        AppContextHolder.init(this)
-
-        // Register the photo-picker launcher before the Activity moves past STARTED.
-        // The callback bridges the Activity result into AndroidImagePickerHelper so that
-        // ImagePickerImpl (injected by Koin) can invoke it without holding an Activity ref.
+        // Register the PickVisualMedia launcher before the Activity moves past STARTED.
+        // Bridges the system photo picker result to AndroidImagePickerHelper so that
+        // ImagePickerImpl (Koin-injected) can trigger a pick without holding an Activity ref.
         val imagePickerLauncher = registerForActivityResult(PickVisualMedia()) { uri ->
             AndroidImagePickerHelper.onResult(uri, applicationContext)
         }

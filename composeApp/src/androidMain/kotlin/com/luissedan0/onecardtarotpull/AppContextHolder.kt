@@ -7,7 +7,9 @@ import android.content.Context
  * ([DatabaseFactory], [DataStoreFactory]) that cannot receive the context via DI at
  * the time they are called.
  *
- * Initialized once in [MainActivity.onCreate] before any factory is invoked.
+ * Initialized once in [TarotApp.onCreate] before Koin starts, so that the lazy
+ * singleton factory ([createTarotDatabase] / [createDataStore]) always has a valid
+ * context when they are first resolved.
  */
 object AppContextHolder {
     private lateinit var _context: Context
@@ -15,7 +17,7 @@ object AppContextHolder {
     /** Application context. Safe to call after [init] has been invoked. */
     val context: Context get() = _context
 
-    /** Must be called in [MainActivity.onCreate] before Koin is started. */
+    /** Must be called in [TarotApp.onCreate] before [startKoin] is invoked. */
     fun init(context: Context) {
         _context = context.applicationContext
     }
