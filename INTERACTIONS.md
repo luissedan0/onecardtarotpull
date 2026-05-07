@@ -713,3 +713,44 @@ All 5 model files created under `commonMain/.../data/model/`. Key design decisio
 ---
 
 *End of Session 9*
+
+---
+
+## Session 10 — May 7, 2026
+
+### User Input
+
+> Implement Phase 9, adding also an inferno palette - black, red, bone white, and a to-do for Phase 12 to show a theme selector in the Settings screen
+
+### AI Reasoning & Decisions
+
+**Two dark-only palettes** — tarot apps are inherently nocturnal; no light/dark toggle needed.
+
+**Mystical** (deep navy `#0D1B2A`, antique gold `#C9A84C`, warm cream `#E8E0D0`) — the original spec palette.
+
+**Inferno** (near-black `#0A0000`, blood red `#CC2200`, bone white `#F5F0E0`) — user's requested addition; secondary colour is ember orange `#E05020`; tertiary is molten amber `#D4900A`.
+
+**Font strategy** — Both Cinzel and Nunito are variable-weight TTFs from Google Fonts GitHub (`Cinzel[wght].ttf` / `Nunito[wght].ttf`). Variable fonts eliminate the need for multiple static files; Compose Multiplatform Resources accepts them natively. Both fonts are OFL-1.1 licensed.
+
+**AppTypography is `@Composable`** — Compose Multiplatform Resources font loading (`Font(resource = Res.font.xxx)`) requires a composable context. The `appTypography()` function is called once inside `AppTheme` and the resulting `Typography` is stable across recompositions as long as the same font files are loaded.
+
+**`LocalAppColorTheme`** uses `staticCompositionLocalOf` (vs `compositionLocalOf`) because the theme is a structural value that causes a full subtree invalidation when it changes (infrequent) — `staticCompositionLocalOf` avoids the snapshot overhead of the dynamic version.
+
+**DataStore key added now** — `KEY_COLOR_THEME` and `colorThemeName` Flow added to `SettingsDataStore` in Phase 9 so the storage contract is complete. The UI (theme selector `RadioButton` rows in Settings) and ViewModel wiring are deferred to Phase 12 as a TODO with the full `ThemeOptionRow` spec documented in `SettingsScreen.kt`.
+
+### Phase 9 — Completed Items
+
+- [x] **9.1** `AppTheme` composable — wraps `MaterialTheme` with palette + typography + `LocalAppColorTheme`
+- [x] **9.2** Color schemes — `mysticalColorScheme` (navy/gold/cream) + `infernoColorScheme` (black/red/bone-white) as `darkColorScheme` with all 30 required fields
+- [x] **9.2+** `AppColorTheme` enum — `Mystical`, `Inferno`; `colorScheme` property; `fromName()` for DataStore round-trip
+- [x] **9.3** `appTypography()` — Cinzel (display/headline/title) + Nunito (body/label); all 13 Material3 text styles defined
+- [x] **9.4** Font files — `cinzel_variable.ttf` + `nunito_variable.ttf` bundled in `composeResources/font/` (variable fonts, OFL-1.1)
+- [x] `App.kt` updated to `AppTheme(colorTheme)` with default `Mystical`; Mystical + Inferno `@Preview` functions added
+- [x] `SettingsDataStore` — `KEY_COLOR_THEME` + `colorThemeName: Flow<String?>` + `setColorThemeName(String)`
+- [x] `SettingsScreen.kt` — Phase 12 theme selector TODO with full `ThemeOptionRow` API spec documented inline
+- [x] Build verified — Android ✅ iOS Simulator ✅ — 31 unit tests green
+- [x] Committed as `feat: Phase 9 — AppTheme…` (0568e48)
+
+---
+
+*End of Session 10*
