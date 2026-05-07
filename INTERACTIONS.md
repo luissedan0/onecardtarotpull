@@ -642,3 +642,40 @@ All 5 model files created under `commonMain/.../data/model/`. Key design decisio
 ---
 
 *End of Session 7*
+
+---
+
+## Session 8 — May 7, 2026
+
+### User Input
+
+> Continue with Phase 7
+
+### AI Reasoning & Decisions
+
+**Koin module split strategy**: Three modules:
+- `appModule` (commonMain) — all platform-agnostic singletons (DB, DataStore, repositories, use cases). ViewModels are NOT declared here yet — they will be added as Phase 10-13 create each ViewModel.
+- `androidModule` (androidMain) — `HapticFeedback`, `ImagePicker`, `ShareHandler` bound to their Android impls. Uses Koin's `androidContext()` extension (available because `TarotApp` starts Koin with `androidContext(this)`).
+- `iosModule` (iosMain) — same three bindings with no-arg iOS constructors.
+
+**AppContextHolder moved to TarotApp**: Previously initialized in `MainActivity.onCreate()`, but since Koin is now started in `TarotApp.onCreate()`, the context must be set BEFORE `startKoin` runs. This prevents a `UninitializedPropertyAccessException` if the `TarotDatabase` lazy singleton is ever resolved at startup. `MainActivity` no longer calls `AppContextHolder.init()`.
+
+**Koin iOS initialization via `ComposeUIViewController.configure`**: The `configure` lambda on `ComposeUIViewController` runs synchronously before the first composition, making it the ideal place to start Koin. A `started` flag in `KoinInitializer` prevents double-initialisation on ViewController recreation.
+
+**Use case granularity — factory vs single**: Use cases are bound with `factory {}` (new instance per injection site). They are stateless value objects, so sharing a singleton would provide no benefit and would create unnecessary coupling between ViewModels that happen to share the same use case type.
+
+**7.5 koinViewModel()**: The `koin-compose` artifact (already in commonMain dependencies) provides `koinViewModel<T>()` for KMP Compose. No additional setup is needed; ViewModels will be declared with `viewModel { HomeViewModel(get(), ...) }` inside `appModule` in Phases 10-13.
+
+### Phase 7 — Completed Items
+
+- [x] **7.1** `AppModule.kt` — DB, DataStore, SettingsDataStore, all repositories, all 7 use cases
+- [x] **7.2** `AndroidModule.kt` — HapticFeedback, ImagePicker, ShareHandler (Android) + `TarotApp` Application class + `android:name` in AndroidManifest
+- [x] **7.3** `IosModule.kt` — HapticFeedback, ImagePicker, ShareHandler (iOS)
+- [x] **7.4** Koin started in `TarotApp.onCreate()` (Android) and `KoinInitializer.init()` via `ComposeUIViewController.configure` (iOS)
+- [x] **7.5** `koinViewModel()` ready-to-use from `koin-compose`; ViewModel declarations deferred to Phases 10-13
+- [x] Build verified — Android ✅ iOS Simulator ✅
+- [x] Committed as `feat: implement Phase 7 — Koin DI wiring`
+
+---
+
+*End of Session 8*
