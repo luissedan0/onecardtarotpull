@@ -548,3 +548,55 @@ All 5 model files created under `commonMain/.../data/model/`. Key design decisio
 ---
 
 *End of Session 5*
+
+---
+
+## Session 6 — May 7, 2026
+
+### User Input
+
+> Now, after finishing each phase, commit the changes to the git repository. Continue with Phase 5
+
+### AI Reasoning & Decisions — Phase 4 & 5 Execution
+
+**Git state**: The repository already had a single commit ("Planning and Phases 1 through 4") containing all work through Phase 3. Committed the pending INTERACTIONS.md update and .gitignore first, then implemented Phase 4 and Phase 5 as separate commits.
+
+**`kotlin.time.Clock` vs `kotlinx.datetime.Clock`**: In kotlinx-datetime 0.6.x, the library's own `Clock` type was removed in favour of `kotlin.time.Clock` from the Kotlin stdlib (stabilised in Kotlin 2.1). Using `kotlinx.datetime.Clock.System` in commonMain caused "Unresolved reference 'System'" on the iOS/Kotlin-Native target. Fixed by changing the import to `kotlin.time.Clock` (no extra dependency needed — it is part of stdlib available in all KMP targets).
+
+**Phase 4 — Repository design decisions**:
+- `CardMeaningRepositoryStrategy` implements a local-first with optional remote fallback: when `useRemote = true`, remote is tried first and local is the fallback if remote returns `null`. This means both implementations can coexist without a hard feature flag.
+- `TarotDeckRepositoryImpl.getById` does a linear scan over the 78-card cached list — O(78) is negligible for this use case.
+- `SettingsRepository` is a thin pass-through over `SettingsDataStore`; this indirection exists solely to keep ViewModels decoupled from DataStore internals and testable with a fake repository.
+
+**Phase 5 — Use case design decisions**:
+- All use cases use `operator fun invoke()` so callers write `pullCardUseCase()` rather than `pullCardUseCase.execute()`.
+- `GetJournalEntriesUseCase.invoke()` is NOT suspend — it returns a cold `Flow` that Room manages.
+- `GetSettingsUseCase` exposes Flows as properties rather than a function, mirroring the repository pattern and letting ViewModels collect them directly.
+- `PullCardUseCase` uses `Random.Default` explicitly for reproducibility in future tests (can be injected via a seeded `Random` in tests).
+
+### Phase 4 — Completed Items
+
+- [x] **4.1** `JournalRepository` interface
+- [x] **4.2** `JournalRepositoryImpl` — Room-backed, uses `kotlin.time.Clock.System` for timestamps
+- [x] **4.3** `CardMeaningRepository` interface
+- [x] **4.4** `LocalCardMeaningRepository` — maps `TarotCard` fields to `CardMeaning`
+- [x] **4.5** `RemoteCardMeaningRepository` — stub returning `null`, documented for future Ktor impl
+- [x] **4.6** `CardMeaningRepositoryStrategy` — local-first with optional remote fallback
+- [x] **4.7** `SettingsRepository` interface + `SettingsRepositoryImpl`
+- [x] **4.8** `TarotDeckRepository` interface + `TarotDeckRepositoryImpl`
+- [x] Committed as `feat: implement Phase 4 — repository layer`
+
+### Phase 5 — Completed Items
+
+- [x] **5.1** `PullCardUseCase` — random card + 50% reversal, `require(deck.isNotEmpty())`
+- [x] **5.2** `SaveJournalEntryUseCase` — delegates to `JournalRepository.saveEntry`
+- [x] **5.3** `GetJournalEntriesUseCase` — non-suspend, returns `Flow`
+- [x] **5.4** `DeleteJournalEntryUseCase` — delegates to `JournalRepository.deleteEntry`
+- [x] **5.5** `GetCardMeaningUseCase` — suspend, returns `CardMeaning?`
+- [x] **5.6** `GetSettingsUseCase` (Flow properties) + `UpdateSettingsUseCase` (suspend mutations)
+- [x] Build verified — Android ✅ iOS Simulator ✅ — all tests pass ✅
+- [x] Committed as `feat: implement Phase 5 — domain use cases`
+
+---
+
+*End of Session 6*
