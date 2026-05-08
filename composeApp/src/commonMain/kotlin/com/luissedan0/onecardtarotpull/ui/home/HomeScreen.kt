@@ -57,6 +57,7 @@ fun HomeScreen(navController: NavController) {
         val event = uiState.snackbarEvent ?: return@LaunchedEffect
         val message = when (event) {
             SnackbarEvent.SavedToJournal -> "Saved to journal ✓"
+            SnackbarEvent.AutoSaved      -> "Auto-saved to journal ✓"   // Phase 14
             SnackbarEvent.SaveError      -> "Could not save — please try again"
         }
         snackbarHostState.showSnackbar(message)

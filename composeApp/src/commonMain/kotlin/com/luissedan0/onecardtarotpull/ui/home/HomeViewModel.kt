@@ -66,18 +66,29 @@ class HomeViewModel(
 
     /**
      * Called when the finger is released after a successful long press.
-     * Pulls a random card, transitions to [CardState.Revealed], and auto-saves
-     * if the setting is enabled.
+     *
+     * ### Sequence (14.1 + 14.2)
+     * 1. Pulls a random card via [PullCardUseCase].
+     * 2. Transitions to [CardState.Revealed].
+     * 3. If [HomeUiState.autoSaveEnabled] is `true`, calls [SaveJournalEntryUseCase] and
+     *    **emits a [SnackbarEvent]**:
+     *    - [SnackbarEvent.AutoSaved] on success — user sees "Auto-saved to journal ✓"
+     *    - [SnackbarEvent.SaveError]  on failure — user can still tap "Save to journal" manually
      */
     fun onLongPressEnd() {
         viewModelScope.launch {
             val pulled = pullCardUseCase()
             _uiState.update { it.copy(cardState = CardState.Revealed(pulled)) }
 
-            // Auto-save: write the entry silently; errors are swallowed here —
-            // the user can always tap "Save to journal" manually.
+            // Phase 14: auto-save with snackbar feedback (14.1 check + 14.2 emit)
             if (_uiState.value.autoSaveEnabled) {
-                saveJournalEntryUseCase(pulled)
+                val result = saveJournalEntryUseCase(pulled)
+                val event = if (result.isSuccess) {
+                    SnackbarEvent.AutoSaved
+                } else {
+                    SnackbarEvent.SaveError
+                }
+                _uiState.update { it.copy(snackbarEvent = event) }
             }
         }
     }

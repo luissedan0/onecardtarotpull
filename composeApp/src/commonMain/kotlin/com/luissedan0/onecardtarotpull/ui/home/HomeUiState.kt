@@ -29,8 +29,16 @@ sealed interface CardState {
  * After consumption, the event is set to `null` in [HomeUiState] to prevent re-delivery.
  */
 sealed interface SnackbarEvent {
-    /** Entry was successfully written to the Room journal table. */
+    /** Entry was successfully written to the Room journal table via **manual** "Save" tap. */
     data object SavedToJournal : SnackbarEvent
+
+    /**
+     * Entry was automatically saved after a pull because [HomeUiState.autoSaveEnabled] is `true`.
+     * Distinct from [SavedToJournal] so [HomeScreen] can show a different message
+     * ("Auto-saved to journal ✓" vs "Saved to journal ✓").
+     * Added in Phase 14.
+     */
+    data object AutoSaved : SnackbarEvent
 
     /** Room write failed — a [Result.failure] was returned by [SaveJournalEntryUseCase]. */
     data object SaveError : SnackbarEvent
