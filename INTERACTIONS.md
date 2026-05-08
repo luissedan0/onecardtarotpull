@@ -754,3 +754,45 @@ All 5 model files created under `commonMain/.../data/model/`. Key design decisio
 ---
 
 *End of Session 10*
+
+---
+
+## Session 11 — May 7, 2026
+
+### User Input
+
+> Execute Phase 10
+
+### AI Reasoning & Decisions
+
+**Long-press start + end detection** — `detectTapGestures(onLongPress = {...})` only fires at the threshold, not at release. Used `awaitEachGesture + withTimeoutOrNull(longPressTimeout) { waitForUpOrCancellation() }`: if the timeout expires (returns `null`) the threshold was crossed → call `onLongPressStart()`, then `waitForUpOrCancellation()` again for `onLongPressEnd()`.
+
+**Card flip** — single `animateFloatAsState` on `rotationY` (0° → 180°, 600 ms FastOutSlowIn). The `if (rotation ≤ 90f)` branch shows the back; `> 90f` shows the front wrapped in `graphicsLayer { rotationY = 180f }` to un-mirror it. `cameraDistance = 12f × density` prevents clipping at the apex. No `AnimatedContent` needed — avoids the z-index cross-fade artifact.
+
+**Shuffle wobble** — `rememberInfiniteTransition` always runs (no `key()` restart); values are only applied inside `graphicsLayer` when `isShuffling && rotation < 90f`. Avoids abrupt animation start/stop and blends naturally into the flip.
+
+**`koinViewModel`** — Koin 4.x split `koinViewModel()` into a separate artifact `io.insert-koin:koin-compose-viewmodel`. Added to `libs.versions.toml` and `commonMain.dependencies`. The `viewModel { ... }` DSL in AppModule uses `org.koin.core.module.dsl.viewModel`.
+
+**Coil3 usage** — `coil3.compose.AsyncImage` (fully-qualified, no import clash) for the custom card-back path. Works with `String` paths (file URI) from the DataStore without extra model wrapping.
+
+### Phase 10 — Completed Items
+
+- [x] **10A.1** `HomeScreen` — Scaffold with topBar, bottomBar, snackbarHost; wires `HomeViewModel` via `koinViewModel()`, collects `uiState` with `collectAsStateWithLifecycle()`
+- [x] **10A.2** `HomeTopBar` — Cinzel-styled title (tracks selected tab), three-dot icon opens `HomeMenu`
+- [x] **10A.3** `HomeMenu` — Material3 `DropdownMenu`; "How to use" → dialog, "Settings" → `navController.navigate(Settings)`
+- [x] **10A.4** `HowToUseDialog` — `AlertDialog` with step-by-step instruction text + "Close" `TextButton`
+- [x] **10B.1** `HomeViewModel` — `CardState` machine, auto-save `combine()` observer, `performHeavyClick()`, `PullCardUseCase`, `SaveJournalEntryUseCase`, `Result`-based snackbar events
+- [x] **10B.2** `PullCardTab` — stateless column; hint text when Idle; reserves button space when not revealed
+- [x] **10B.3** `CardBackView` — `awaitEachGesture` long-press; shows Coil3 `AsyncImage` or `DefaultCardBackContent`
+- [x] **10B.4** Shuffle animation — `InfiniteTransition` ±6° `rotationZ` @ 250 ms + ±5dp `translationY` @ 350 ms
+- [x] **10B.5** Card flip — `animateFloatAsState` 0°→180° 600 ms; back/front switch at 90° boundary; `cameraDistance` for perspective
+- [x] **10B.6** `CardFrontView` — `detectTapGestures(onLongPress)` → `onCardLongPress()`; shows `displayName` + "Reversed" label
+- [x] **10B.7** `CardActionButtons` — "Learn more" `Button` + "Save to journal" `OutlinedButton` (75% width)
+- [x] **10B.8** Snackbar — `LaunchedEffect(uiState.snackbarEvent)` in HomeScreen; calls `consumeSnackbarEvent()` after display
+- [x] `AppModule.kt` — `viewModel { HomeViewModel(get(), get(), get(), get()) }`
+- [x] Build verified — Android ✅ iOS Simulator ✅ — 31 unit tests green
+- [x] Committed as `feat: Phase 10 — Home screen…` (8ce553c)
+
+---
+
+*End of Session 11*
