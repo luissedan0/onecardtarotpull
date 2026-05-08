@@ -46,7 +46,9 @@ import coil3.compose.AsyncImage
 import com.luissedan0.onecardtarotpull.platform.ImagePicker
 import com.luissedan0.onecardtarotpull.platform.saveImageToAppStorage
 import com.luissedan0.onecardtarotpull.ui.theme.AppColorTheme
+import com.luissedan0.onecardtarotpull.ui.theme.AppTheme
 import kotlinx.coroutines.Dispatchers
+import androidx.compose.ui.tooling.preview.Preview
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.koin.compose.koinInject
@@ -369,5 +371,125 @@ private fun ThemeOptionRow(
             selected = isSelected,
             onClick = onSelect
         )
+    }
+}
+
+// ─── Previews ─────────────────────────────────────────────────────────────────
+
+@Preview
+@Composable
+private fun AutoSaveRowPreview() {
+    AppTheme {
+        AutoSaveRow(checked = false, onCheckedChange = {})
+    }
+}
+
+@Preview
+@Composable
+private fun AutoSaveRowCheckedPreview() {
+    AppTheme {
+        AutoSaveRow(checked = true, onCheckedChange = {})
+    }
+}
+
+@Preview
+@Composable
+private fun CustomCardBackRowPreview() {
+    AppTheme {
+        CustomCardBackRow(
+            cardBackPath = null,
+            onPickImage = {},
+            onClearImage = {}
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun ThemeRowMysticalPreview() {
+    AppTheme {
+        ThemeOptionRow(
+            theme = AppColorTheme.Mystical,
+            isSelected = true,
+            onSelect = {}
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun ThemeRowInfernoPreview() {
+    AppTheme(colorTheme = AppColorTheme.Inferno) {
+        ThemeOptionRow(
+            theme = AppColorTheme.Inferno,
+            isSelected = true,
+            onSelect = {}
+        )
+    }
+}
+
+/**
+ * Full Settings screen preview using static/hardcoded state — no Koin or NavController needed.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Preview
+@Composable
+private fun SettingsScreenFullPreview() {
+    AppTheme {
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = {
+                        Text(
+                            text = "Settings",
+                            style = MaterialTheme.typography.titleLarge
+                        )
+                    },
+                    navigationIcon = {
+                        IconButton(onClick = {}) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = "Back"
+                            )
+                        }
+                    }
+                )
+            }
+        ) { innerPadding ->
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding)
+                    .verticalScroll(rememberScrollState())
+            ) {
+                SettingsSectionHeader(title = "Behaviour")
+                AutoSaveRow(checked = false, onCheckedChange = {})
+                HorizontalDivider(
+                    modifier = Modifier.padding(horizontal = 16.dp),
+                    color = MaterialTheme.colorScheme.outlineVariant
+                )
+                Spacer(Modifier.height(8.dp))
+                SettingsSectionHeader(title = "Card Back")
+                CustomCardBackRow(
+                    cardBackPath = null,
+                    onPickImage = {},
+                    onClearImage = {}
+                )
+                HorizontalDivider(
+                    modifier = Modifier.padding(horizontal = 16.dp),
+                    color = MaterialTheme.colorScheme.outlineVariant
+                )
+                Spacer(Modifier.height(8.dp))
+                SettingsSectionHeader(title = "Theme")
+                AppColorTheme.entries.forEach { theme ->
+                    ThemeOptionRow(
+                        theme = theme,
+                        isSelected = theme == AppColorTheme.Mystical,
+                        onSelect = {}
+                    )
+                }
+                Spacer(Modifier.height(24.dp))
+            }
+        }
     }
 }

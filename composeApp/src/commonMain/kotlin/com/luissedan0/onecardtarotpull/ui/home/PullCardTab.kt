@@ -36,6 +36,9 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.luissedan0.onecardtarotpull.ui.theme.AppColorTheme
+import com.luissedan0.onecardtarotpull.ui.theme.AppTheme
+import androidx.compose.ui.tooling.preview.Preview
 
 // ─── Card dimensions ─────────────────────────────────────────────────────────
 // Standard tarot ratio ≈ 1 : 1.75
@@ -387,6 +390,88 @@ private fun CardFrontView(
                     )
                 }
             }
+        }
+    }
+}
+
+// ─── Previews ─────────────────────────────────────────────────────────────────
+
+@Preview
+@Composable
+private fun CardBackIdlePreview() {
+    AppTheme {
+        Box(modifier = Modifier.width(CardWidth).height(CardHeight)) {
+            CardBackView(
+                isShuffling = false,
+                customBackPath = null,
+                onLongPressStart = {},
+                onLongPressEnd = {}
+            )
+        }
+    }
+}
+
+@Preview
+@Composable
+private fun CardBackShufflingPreview() {
+    AppTheme {
+        Box(modifier = Modifier.width(CardWidth).height(CardHeight)) {
+            CardBackView(
+                isShuffling = true,
+                customBackPath = null,
+                onLongPressStart = {},
+                onLongPressEnd = {}
+            )
+        }
+    }
+}
+
+@Preview
+@Composable
+private fun CardFrontPreview() {
+    val card = com.luissedan0.onecardtarotpull.data.model.TarotCard(
+        id = 0,
+        name = "The Fool",
+        isMajorArcana = true,
+        suit = null,
+        number = 0,
+        keywords = listOf("beginnings", "freedom"),
+        keywordsReversed = listOf("reckless", "careless"),
+        meaningUpright = "New beginnings.",
+        meaningReversed = "Recklessness."
+    )
+    val pulled = com.luissedan0.onecardtarotpull.data.model.PulledCard(
+        card = card,
+        isReversed = false
+    )
+    AppTheme {
+        Box(modifier = Modifier.width(CardWidth).height(CardHeight)) {
+            CardFrontView(pulledCard = pulled, onCardLongPress = {})
+        }
+    }
+}
+
+@Preview
+@Composable
+private fun CardFrontReversedPreview() {
+    val card = com.luissedan0.onecardtarotpull.data.model.TarotCard(
+        id = 36,
+        name = "Five of Cups",
+        isMajorArcana = false,
+        suit = com.luissedan0.onecardtarotpull.data.model.TarotSuit.CUPS,
+        number = 5,
+        keywords = listOf("loss", "grief"),
+        keywordsReversed = listOf("acceptance", "moving on"),
+        meaningUpright = "Loss and sorrow.",
+        meaningReversed = "Moving on."
+    )
+    val pulled = com.luissedan0.onecardtarotpull.data.model.PulledCard(
+        card = card,
+        isReversed = true
+    )
+    AppTheme(colorTheme = AppColorTheme.Inferno) {
+        Box(modifier = Modifier.width(CardWidth).height(CardHeight)) {
+            CardFrontView(pulledCard = pulled, onCardLongPress = {})
         }
     }
 }

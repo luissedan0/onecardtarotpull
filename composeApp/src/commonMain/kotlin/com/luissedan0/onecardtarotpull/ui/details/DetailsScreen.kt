@@ -42,6 +42,9 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import com.luissedan0.onecardtarotpull.data.model.CardMeaning
+import com.luissedan0.onecardtarotpull.ui.theme.AppColorTheme
+import com.luissedan0.onecardtarotpull.ui.theme.AppTheme
+import androidx.compose.ui.tooling.preview.Preview
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 
@@ -366,5 +369,49 @@ private fun MeaningText(
             color = MaterialTheme.colorScheme.onSurface,
             textAlign = TextAlign.Start
         )
+    }
+}
+
+// ─── Previews ─────────────────────────────────────────────────────────────────
+
+private val previewCardMeaning = CardMeaning(
+    cardId = 2,
+    name = "The High Priestess",
+    keywords = listOf("intuition", "mystery", "inner knowing", "divine feminine", "wisdom"),
+    keywordsReversed = listOf("secrets", "repressed intuition", "withdrawal", "inner confusion"),
+    uprightMeaning = "The High Priestess sits at the threshold of the conscious and subconscious " +
+        "mind. She is the guardian of the unconscious. She is the guardian of the unconscious " +
+        "and asks you to look within, to trust your inner voice, and to pay attention to the " +
+        "subtle signs and synchronicities that guide your path.",
+    reversedMeaning = "The High Priestess reversed suggests that you may be ignoring or " +
+        "repressing your inner voice. You may be out of touch with your intuition, caught in " +
+        "the noise of everyday life and unable to hear the quiet whispers of your higher self."
+)
+
+@Preview
+@Composable
+private fun DetailsContentUprightPreview() {
+    AppTheme {
+        DetailsContent(cardMeaning = previewCardMeaning, isReversed = false)
+    }
+}
+
+@Preview
+@Composable
+private fun DetailsContentReversedPreview() {
+    AppTheme(colorTheme = AppColorTheme.Inferno) {
+        DetailsContent(cardMeaning = previewCardMeaning, isReversed = true)
+    }
+}
+
+@Preview
+@Composable
+private fun KeywordSectionPreview() {
+    AppTheme {
+        Box(modifier = Modifier.padding(16.dp)) {
+            KeywordSection(
+                keywords = listOf("intuition", "mystery", "inner knowing", "divine feminine", "wisdom")
+            )
+        }
     }
 }

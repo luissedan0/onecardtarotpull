@@ -43,6 +43,9 @@ import androidx.navigation.NavController
 import com.luissedan0.onecardtarotpull.data.model.JournalEntry
 import com.luissedan0.onecardtarotpull.platform.ShareHandler
 import com.luissedan0.onecardtarotpull.ui.navigation.AppRoutes
+import com.luissedan0.onecardtarotpull.ui.theme.AppColorTheme
+import com.luissedan0.onecardtarotpull.ui.theme.AppTheme
+import androidx.compose.ui.tooling.preview.Preview
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
@@ -379,4 +382,54 @@ private fun buildShareText(entry: JournalEntry): String = buildString {
     appendLine("Pulled on ${entry.timestamp.toFormattedDateTime()}")
     appendLine()
     append("— OneCardTarotPull")
+}
+
+// ─── Previews ─────────────────────────────────────────────────────────────────
+
+private val previewEntry = JournalEntry(
+    id = 1L,
+    cardId = 0,
+    cardDisplayName = "The High Priestess",
+    isReversed = false,
+    timestamp = 1_746_648_600_000L  // May 7, 2026 · 7:30 PM UTC
+)
+
+private val previewEntryReversed = JournalEntry(
+    id = 2L,
+    cardId = 36,
+    cardDisplayName = "Five of Cups (Reversed)",
+    isReversed = true,
+    timestamp = 1_746_635_100_000L  // May 7, 2026 · 3:45 PM UTC
+)
+
+@Preview
+@Composable
+private fun JournalEntryRowPreview() {
+    AppTheme {
+        JournalEntryRow(
+            entry = previewEntry,
+            onShare = {},
+            onTap = {}
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun JournalEntryRowReversedPreview() {
+    AppTheme(colorTheme = AppColorTheme.Inferno) {
+        JournalEntryRow(
+            entry = previewEntryReversed,
+            onShare = {},
+            onTap = {}
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun EmptyJournalPreview() {
+    AppTheme {
+        EmptyJournalMessage()
+    }
 }
