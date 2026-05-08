@@ -936,3 +936,45 @@ Phase 14 was a targeted 3-file edit — the auto-save call was already present i
 ---
 
 *End of Session 15*
+
+---
+
+## Session 16 — May 7, 2026
+
+### User Input
+
+> Continue with phase 15
+
+### Decisions & Implementation
+
+**Phase 15 — Testing (5 checklist items)**
+
+**New dependency:** `kotlinx-coroutines-test 1.10.2` added to `commonTest`; `androidInstrumentedTest` sourceSet wired in `build.gradle.kts`.
+
+**15.1 — `PullCardUseCaseTest`** (`commonTest`, 5 tests)
+- Uses `FakeTarotDeckRepository` (anonymous object with a 78-card hand-crafted deck)
+- Verifies: card always in deck, id always 0–77, reversed ≈ 50% over 1000 pulls, single-card deck works, empty deck throws `IllegalArgumentException`
+
+**15.2 — `JournalRepositoryTest`** (`commonTest`, 10 tests)
+- Uses `FakeJournalDao` backed by a `MutableStateFlow<List<JournalEntry>>` — no Room runtime needed
+- Covers: empty initial state, insert reflects in flow, reversed flag stored, cardId snapshot, timestamp > 0, delete removes entry, delete non-existent id succeeds, multi-entry round-trip, displayName snapshot matches `PulledCard.displayName`
+
+**15.3 — `TarotDeckLoaderInstrumentedTest`** (`androidInstrumentedTest`, 12 tests)
+- Placed in new `src/androidInstrumentedTest/kotlin/` directory (run with `./gradlew :composeApp:connectedAndroidTest`)
+- Requires Compose Resources runtime (only available with full Android app context)
+- Validates: exactly 78 cards, 22 major / 56 minor, 14 cards per suit, unique IDs 0–77, non-blank meanings/keywords, cache returns same instance, `clearCache()` forces re-parse
+
+**15.4 — `LocalCardMeaningRepositoryTest`** (`commonTest`, 10 tests)
+- `LocalCardMeaningRepository` refactored to accept `deckProvider: suspend () -> List<TarotCard>` parameter with default `{ TarotDeckLoader.load() }` (backward-compatible)
+- Tests use a 3-card fixture deck; full 78-card round-trip covered by the instrumented test above
+
+**15.5 — `SettingsRepositoryTest`** (`commonTest`, 10 tests)
+- Uses `FakeSettingsRepository` (in-memory `MutableStateFlow` per setting — no DataStore infra needed)
+- Covers: all three settings default correctly, set/read/toggle each, independence between settings
+
+**Results:** 58 unit tests total (was 31) — Android ✅ iOS Simulator ✅ — zero failures
+- Committed as `feat: Phase 15 — unit tests for use case, repositories, and deck loader` (cd361a7)
+
+---
+
+*End of Session 16*
