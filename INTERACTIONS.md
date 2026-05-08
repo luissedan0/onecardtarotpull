@@ -344,15 +344,15 @@ composeApp/src/
 
 ### Phase 16 — Polish & Final Checks
 
-- [ ] **16.1** Add `@Preview` composables for: `CardBackView`, `CardFrontView`, `JournalEntryRow`, `DetailsScreen`, `SettingsScreen`
-- [ ] **16.2** Verify haptic feedback works on physical Android device
-- [ ] **16.3** Verify image picker + persistence works on Android and iOS simulator
-- [ ] **16.4** Verify share sheet works on both platforms
-- [ ] **16.5** Verify swipe-to-delete animation smoothness
-- [ ] **16.6** Verify card flip + shuffle animations feel satisfying
-- [ ] **16.7** Verify journal sorts newest-first after multiple pulls
-- [ ] **16.8** Verify auto-save + manual save do not create duplicate entries
-- [ ] **16.9** Run Gradle build for both Android APK and iOS framework — resolve any warnings
+- [x] **16.1** Add `@Preview` composables for: `CardBackView`, `CardFrontView`, `JournalEntryRow`, `DetailsScreen`, `SettingsScreen`
+- [ ] **16.2** Verify haptic feedback works on physical Android device *(requires physical device)*
+- [ ] **16.3** Verify image picker + persistence works on Android *(iOS stub pending Swift bridge)*
+- [ ] **16.4** Verify share sheet works on both platforms *(requires runtime)*
+- [ ] **16.5** Verify swipe-to-delete animation smoothness *(requires runtime)*
+- [ ] **16.6** Verify card flip + shuffle animations feel satisfying *(requires runtime)*
+- [ ] **16.7** Verify journal sorts newest-first after multiple pulls *(ORDER BY timestamp DESC confirmed in DAO)*
+- [ ] **16.8** Verify auto-save + manual save do not create duplicate entries *(logic verified, requires runtime)*
+- [x] **16.9** Run Gradle build for both Android APK and iOS framework — resolve any warnings
 
 ---
 
@@ -978,3 +978,50 @@ Phase 14 was a targeted 3-file edit — the auto-save call was already present i
 ---
 
 *End of Session 16*
+
+---
+
+## Session 17 — May 7, 2026
+
+### User Input
+
+> Finish with Phase 16
+
+### Reasoning
+
+Phase 16 is divided into:
+- **16.1** (automatable): `@Preview` composables for all five screen/component targets
+- **16.2–16.8** (manual verification): haptic, image picker, share, animations, journal ordering, auto-save deduplication
+- **16.9** (automatable): Clean Gradle build for both Android APK and iOS framework
+
+**16.1 — @Preview composables**
+
+`@Preview` annotation source: The `org.jetbrains.compose.ui:ui-tooling-preview` artifact (which is what `compose.uiToolingPreview` resolves to) exports the annotation under `androidx.compose.ui.tooling.preview.Preview` — NOT `org.jetbrains.compose.ui.tooling.preview.Preview`. The jar's `linkdata` directory names confirm the `androidx.compose.ui.tooling.preview` package.
+
+All preview functions are `private` and live in the same file as the composable they preview (so they can access `private` composables). Each is wrapped in `AppTheme` so the color scheme renders correctly in Android Studio.
+
+Preview composables added:
+- **`PullCardTab.kt`**: `CardBackIdlePreview`, `CardBackShufflingPreview`, `CardFrontPreview` (Mystical), `CardFrontReversedPreview` (Inferno — shows the reversed card text)
+- **`JournalScreen.kt`**: `JournalEntryRowPreview`, `JournalEntryRowReversedPreview`, `EmptyJournalPreview`
+- **`DetailsScreen.kt`**: `DetailsContentUprightPreview`, `DetailsContentReversedPreview`, `KeywordSectionPreview`
+- **`SettingsScreen.kt`**: `AutoSaveRowPreview` (unchecked), `AutoSaveRowCheckedPreview`, `CustomCardBackRowPreview`, `ThemeRowMysticalPreview`, `ThemeRowInfernoPreview`, `SettingsScreenFullPreview` (full Scaffold with all sections, static state — no Koin or NavController)
+
+**16.2–16.8 — Manual verification checklist**
+These items require a physical device or simulator session. Status at end of build:
+- **16.2 Haptic (Android)**: Wired via `VibrationEffect` with API-level branching — verified logic in Phase 6, requires physical Android device
+- **16.3 Image picker**: Android `PickVisualMedia` launcher + `PlatformFileStorage` → confirmed compiles; iOS stub returns `null` (Phase 6 note: full iOS PHPicker requires Swift bridge, deferred)
+- **16.4 Share**: `UIActivityViewController` (iOS) + `Intent.ACTION_SEND` (Android) — ready, requires runtime test
+- **16.5 Swipe-to-delete**: `SwipeToDismissBox` + `animateColorAsState` + `animateItem()` — all APIs present
+- **16.6 Card flip/shuffle**: `animateFloatAsState` 600 ms flip + `InfiniteTransition` ±6° wobble — code verified in Phase 10
+- **16.7 Journal newest-first**: `JournalDao.getEntriesNewestFirst()` uses `ORDER BY timestamp DESC` — confirmed in Phase 3
+- **16.8 Auto-save deduplication**: `onLongPressEnd` only saves when card is `Revealed`; manual "Save" button is separate — no path creates two entries for the same pull
+
+**16.9 — Build verification**
+- `assembleDebug` → APK produced ✅
+- `linkDebugFrameworkIosSimulatorArm64` → `.framework` produced ✅
+- 58 unit tests — all pass ✅
+- Committed as `feat(ui): add @Preview composables for all screens — Phase 16` (3a2e1ac)
+
+---
+
+*End of Session 17*
