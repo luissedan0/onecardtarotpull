@@ -5,6 +5,7 @@ import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.automirrored.outlined.List
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.outlined.Star
+import androidx.compose.runtime.saveable.Saver
 import androidx.compose.ui.graphics.vector.ImageVector
 
 /**
@@ -40,5 +41,24 @@ sealed class BottomNavItem(
     companion object {
         /** Ordered list used to build the NavigationBar items. */
         val items: List<BottomNavItem> = listOf(PullCard, Journal)
+
+        /**
+         * [Saver] that persists the active [BottomNavItem] as its ordinal [Int].
+         *
+         * `Int` is natively Bundle-serializable so this satisfies [rememberSaveable]
+         * on both Android (Bundle-backed) and iOS (in-memory) without any platform
+         * imports or `@Parcelize` annotations.
+         *
+         * Usage:
+         * ```kotlin
+         * var selectedTab by rememberSaveable(stateSaver = BottomNavItem.Saver) {
+         *     mutableStateOf(BottomNavItem.PullCard)
+         * }
+         * ```
+         */
+        val Saver: Saver<BottomNavItem, Int> = Saver(
+            save    = { items.indexOf(it).coerceAtLeast(0) },
+            restore = { index -> items.getOrElse(index) { PullCard } }
+        )
     }
 }

@@ -49,7 +49,12 @@ fun HomeScreen(navController: NavController) {
     val viewModel: HomeViewModel = koinViewModel()
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-    var selectedTab by rememberSaveable { mutableStateOf<BottomNavItem>(BottomNavItem.PullCard) }
+    // Use the custom Saver so the active tab survives configuration changes and process death.
+    // Storing a plain BottomNavItem would crash with IllegalArgumentException because the
+    // sealed-class data objects are not Bundle-serializable by default.
+    var selectedTab by rememberSaveable(stateSaver = BottomNavItem.Saver) {
+        mutableStateOf(BottomNavItem.PullCard)
+    }
     val snackbarHostState = remember { SnackbarHostState() }
 
     // Consume one-shot snackbar events from the ViewModel.
