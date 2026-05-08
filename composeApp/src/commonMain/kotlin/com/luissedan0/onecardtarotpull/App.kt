@@ -4,30 +4,41 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.luissedan0.onecardtarotpull.ui.navigation.AppNavHost
+import com.luissedan0.onecardtarotpull.ui.settings.SettingsViewModel
 import com.luissedan0.onecardtarotpull.ui.theme.AppColorTheme
 import com.luissedan0.onecardtarotpull.ui.theme.AppTheme
+import org.koin.compose.viewmodel.koinViewModel
 
 /**
  * Root composable for the OneCardTarotPull app.
  *
- * Delegates theming to [AppTheme] (Cinzel + Nunito fonts, Mystical/Inferno palettes)
- * and all navigation to [AppNavHost].
+ * Observes [SettingsViewModel.colorTheme] (backed by DataStore via Koin) so the
+ * entire theme — Mystical or Inferno — responds to changes made in [SettingsScreen]
+ * without requiring an app restart.
  *
- * ### Phase 12 — Theme switching
- * Replace the default [colorTheme] with an observed value from [SettingsViewModel]:
- * ```kotlin
- * val colorTheme by settingsViewModel.colorTheme.collectAsStateWithLifecycle()
- * App(colorTheme = colorTheme)
+ * ### Theme switching flow
  * ```
- * The call site in [MainActivity] / [MainViewController] will provide the ViewModel.
+ * SettingsScreen → SettingsViewModel.setColorTheme(theme)
+ *   → UpdateSettingsUseCase.setColorTheme()
+ *   → SettingsRepository.setColorThemeName()
+ *   → SettingsDataStore.setColorThemeName()       (DataStore write)
+ *   → DataStore emits new value to all subscribers
+ *   → App's SettingsViewModel.colorTheme emits    (may be a different VM instance)
+ *   → AppTheme re-renders with new ColorScheme    (immediate, no restart)
+ * ```
  *
- * @param colorTheme Active palette. Defaults to [AppColorTheme.Mystical].
+ * Both the [App]-level and [SettingsScreen]-level [SettingsViewModel] instances
+ * observe the same DataStore [kotlinx.coroutines.flow.Flow] so they remain in sync
+ * even if Koin provides them as separate ViewModel instances.
  */
 @Composable
-fun App(colorTheme: AppColorTheme = AppColorTheme.Mystical) {
+fun App() {
+    val settingsViewModel: SettingsViewModel = koinViewModel()
+    val colorTheme by settingsViewModel.colorTheme.collectAsStateWithLifecycle()
     AppTheme(colorTheme = colorTheme) {
         Surface(
             modifier = Modifier.fillMaxSize(),
@@ -36,16 +47,4 @@ fun App(colorTheme: AppColorTheme = AppColorTheme.Mystical) {
             AppNavHost()
         }
     }
-}
-
-@Preview
-@Composable
-private fun AppMysticalPreview() {
-    App(colorTheme = AppColorTheme.Mystical)
-}
-
-@Preview
-@Composable
-private fun AppInfernoPreview() {
-    App(colorTheme = AppColorTheme.Inferno)
 }

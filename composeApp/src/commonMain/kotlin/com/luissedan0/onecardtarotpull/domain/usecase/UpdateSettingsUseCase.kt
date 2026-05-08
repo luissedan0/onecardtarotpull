@@ -1,6 +1,7 @@
 package com.luissedan0.onecardtarotpull.domain.usecase
 
 import com.luissedan0.onecardtarotpull.data.repository.SettingsRepository
+import com.luissedan0.onecardtarotpull.ui.theme.AppColorTheme
 
 /**
  * Mutates persisted settings.
@@ -19,4 +20,11 @@ class UpdateSettingsUseCase(
      */
     suspend fun setCustomCardBackPath(path: String?) =
         settingsRepository.setCustomCardBackPath(path)
+
+    /**
+     * Persists the selected palette by its [AppColorTheme.name].
+     * The change is observed by [GetSettingsUseCase.colorTheme] subscribers immediately.
+     */
+    suspend fun setColorTheme(theme: AppColorTheme) =
+        settingsRepository.setColorThemeName(theme.name)
 }

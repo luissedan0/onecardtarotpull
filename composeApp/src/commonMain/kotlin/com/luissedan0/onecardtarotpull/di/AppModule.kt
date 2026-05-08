@@ -23,6 +23,7 @@ import com.luissedan0.onecardtarotpull.domain.usecase.SaveJournalEntryUseCase
 import com.luissedan0.onecardtarotpull.domain.usecase.UpdateSettingsUseCase
 import com.luissedan0.onecardtarotpull.ui.home.HomeViewModel
 import com.luissedan0.onecardtarotpull.ui.journal.JournalViewModel
+import com.luissedan0.onecardtarotpull.ui.settings.SettingsViewModel
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
@@ -95,6 +96,14 @@ val appModule = module {
     /** [JournalViewModel] — live Room list + delete action. */
     viewModel { JournalViewModel(get(), get()) }
 
-    // SettingsViewModel → Phase 12 / 13
-    // DetailsViewModel  → Phase 12
+    /**
+     * [SettingsViewModel] — auto-save, custom card back, and theme palette flows.
+     *
+     * Used by both [App] (for global theme switching) and [SettingsScreen]
+     * (for reads + mutations). Both call `koinViewModel()` which may create separate
+     * instances, but they stay in sync because they all observe the same DataStore.
+     */
+    viewModel { SettingsViewModel(get(), get()) }
+
+    // DetailsViewModel  → Phase 13
 }
