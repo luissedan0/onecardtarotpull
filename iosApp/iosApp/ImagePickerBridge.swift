@@ -20,7 +20,7 @@ import ComposeApp
 ///
 /// The Kotlin/Native ObjC header maps `ByteArray?` to `ComposeAppKotlinByteArray?`,
 /// so we convert `Data` manually using `KotlinByteArray(size:)` + `set(index:value:)`.
-@objc final class SwiftImagePickerInvoker: NSObject, ComposeAppImagePickerInvoker {
+@objc final class SwiftImagePickerInvoker: NSObject, ImagePickerInvoker {
 
     // MARK: ImagePickerInvoker
 
@@ -42,7 +42,7 @@ import ComposeApp
         picker.delegate = self
 
         guard let rootVC = Self.rootViewController() else {
-            ComposeAppImagePickerCallbackBridge.shared.cancel()
+            ImagePickerCallbackBridge.shared.cancel()
             return
         }
         rootVC.present(picker, animated: true)
@@ -69,8 +69,8 @@ import ComposeApp
     ///
     /// Kotlin/Native maps `ByteArray` to `KotlinByteArray` in ObjC/Swift.
     /// `KotlinByteArray` is indexed by `Int32` and holds signed `Int8` values.
-    private static func toKotlinByteArray(_ data: Data) -> ComposeAppKotlinByteArray {
-        let kotlinArray = ComposeAppKotlinByteArray(size: Int32(data.count))
+    private static func toKotlinByteArray(_ data: Data) -> KotlinByteArray {
+        let kotlinArray = KotlinByteArray(size: Int32(data.count))
         data.withUnsafeBytes { rawBuffer in
             for (index, byte) in rawBuffer.enumerated() {
                 kotlinArray.set(index: Int32(index), value: Int8(bitPattern: byte))
@@ -90,7 +90,7 @@ extension SwiftImagePickerInvoker: PHPickerViewControllerDelegate {
         guard let itemProvider = results.first?.itemProvider,
               itemProvider.canLoadObject(ofClass: UIImage.self) else {
             // User cancelled or selected a non-image item.
-            ComposeAppImagePickerCallbackBridge.shared.cancel()
+            ImagePickerCallbackBridge.shared.cancel()
             return
         }
 
@@ -98,7 +98,7 @@ extension SwiftImagePickerInvoker: PHPickerViewControllerDelegate {
             guard let image = object as? UIImage,
                   let jpegData = image.jpegData(compressionQuality: 0.85) else {
                 DispatchQueue.main.async {
-                    ComposeAppImagePickerCallbackBridge.shared.cancel()
+                    ImagePickerCallbackBridge.shared.cancel()
                 }
                 return
             }
@@ -108,7 +108,7 @@ extension SwiftImagePickerInvoker: PHPickerViewControllerDelegate {
             // so we must convert Data → KotlinByteArray manually.
             let kotlinBytes = Self.toKotlinByteArray(jpegData)
             DispatchQueue.main.async {
-                ComposeAppImagePickerCallbackBridge.shared.deliver(bytes: kotlinBytes)
+                ImagePickerCallbackBridge.shared.deliver(bytes: kotlinBytes)
             }
         }
     }
