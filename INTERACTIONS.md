@@ -822,3 +822,49 @@ All 5 model files created under `commonMain/.../data/model/`. Key design decisio
 ---
 
 *End of Session 12*
+
+---
+
+## Session 13 — May 7, 2026
+
+### User Input
+
+> Continue with Phase 12
+
+### Decisions & Implementation
+
+**Settings data layer extended (12.1):**
+- `SettingsRepository` interface + `SettingsRepositoryImpl`: added `colorThemeName: Flow<String?>` + `setColorThemeName(name: String)`, delegating to `SettingsDataStore` (already had the DataStore key from Phase 9).
+- `GetSettingsUseCase.colorTheme: Flow<AppColorTheme>` — maps `colorThemeName` via `AppColorTheme.fromName(it)`.
+- `UpdateSettingsUseCase.setColorTheme(theme)` — stores `theme.name` to DataStore.
+
+**PlatformFileStorage (12.3):**
+- `expect fun saveImageToAppStorage(bytes, fileName)` in `platform/` — bridge for writing picked image bytes to app-private storage.
+- Android actual: `File(AppContextHolder.context.filesDir, fileName).writeBytes(bytes)` — returns absolute path.
+- iOS actual: stub returning `""` (iOS `ImagePickerImpl` returns `null` bytes, so this is never called).
+
+**SettingsViewModel (12.1):**
+- Three `StateFlow`s via `stateIn(WhileSubscribed(5_000))`: `autoSaveEnabled`, `customCardBackPath`, `colorTheme`.
+- Mutators (`setAutoSave`, `setCustomCardBack`, `setColorTheme`) each launch a `viewModelScope` coroutine.
+
+**SettingsScreen (12.2, 12.3):**
+- `AutoSaveRow`: `Checkbox` + two-line label; full-row `clickable` toggles state.
+- `CustomCardBackRow`: Coil `AsyncImage` 48dp thumbnail (when set) + `OutlinedButton` + `Clear` icon. `imagePicker.pickImage` callback dispatches `saveImageToAppStorage` to `Dispatchers.Default` via `rememberCoroutineScope`, then calls `viewModel.setCustomCardBack(path)`.
+- `ThemeOptionRow`: two filled `CircleShape` swatches (primary + background) + `displayName` + `RadioButton`; rendered for each `AppColorTheme.entries`.
+- `SettingsSectionHeader`: uppercase label in `colorScheme.primary`.
+
+**App.kt (Phase 12 hook):**
+- Removed `colorTheme` parameter entirely; now injects `koinViewModel<SettingsViewModel>()` and observes `colorTheme.collectAsStateWithLifecycle()`.
+- Global theme switches immediately on DataStore write — no restart needed.
+- Note: `App()`-level VM and `SettingsScreen()`-level VM may be separate Koin instances (different `ViewModelStoreOwner`s) but stay in sync because both observe the same DataStore `Flow`.
+
+**AppModule:** `viewModel { SettingsViewModel(get(), get()) }`.
+
+**12.4 status:** Already satisfied since Phase 10 — `HomeViewModel.init {}` observes `GetSettingsUseCase.customCardBackPath` and propagates it into `HomeUiState.customCardBackPath`, which `PullCardTab.FlippableCard` passes to `CardBackView` for the Coil `AsyncImage`.
+
+- Build verified — Android ✅ iOS Simulator ✅ — 31 unit tests green
+- Committed as `feat: Phase 12 — Settings screen…` (769f724)
+
+---
+
+*End of Session 13*
