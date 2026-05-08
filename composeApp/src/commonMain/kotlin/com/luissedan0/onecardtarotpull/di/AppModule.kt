@@ -21,10 +21,12 @@ import com.luissedan0.onecardtarotpull.domain.usecase.GetSettingsUseCase
 import com.luissedan0.onecardtarotpull.domain.usecase.PullCardUseCase
 import com.luissedan0.onecardtarotpull.domain.usecase.SaveJournalEntryUseCase
 import com.luissedan0.onecardtarotpull.domain.usecase.UpdateSettingsUseCase
+import com.luissedan0.onecardtarotpull.ui.details.DetailsViewModel
 import com.luissedan0.onecardtarotpull.ui.home.HomeViewModel
 import com.luissedan0.onecardtarotpull.ui.journal.JournalViewModel
 import com.luissedan0.onecardtarotpull.ui.settings.SettingsViewModel
 import org.koin.core.module.dsl.viewModel
+import org.koin.core.module.dsl.viewModelOf
 import org.koin.dsl.module
 
 /**
@@ -105,5 +107,12 @@ val appModule = module {
      */
     viewModel { SettingsViewModel(get(), get()) }
 
-    // DetailsViewModel  → Phase 13
+    /**
+     * [DetailsViewModel] — loads [CardMeaning] for the given card ID.
+     *
+     * Uses Koin's [params] injection to receive [cardId] (Int) and [isReversed] (Boolean)
+     * from the composable via `koinViewModel(parameters = { parametersOf(cardId, isReversed) })`.
+     * This avoids a direct [androidx.lifecycle.SavedStateHandle] dependency in KMP common code.
+     */
+    viewModel { params -> DetailsViewModel(params.get(), params.get(), get()) }
 }
