@@ -796,3 +796,29 @@ All 5 model files created under `commonMain/.../data/model/`. Key design decisio
 ---
 
 *End of Session 11*
+
+---
+
+## Session 12 — May 7, 2026
+
+### User Input
+
+> Continue with Phase 11
+
+### Decisions & Implementation
+
+- **`JournalViewModel`** — `StateFlow<List<JournalEntry>>` from `GetJournalEntriesUseCase().stateIn(WhileSubscribed(5_000))`, `deleteEntry(id)` fires a `viewModelScope.launch` wrapping `DeleteJournalEntryUseCase`.
+- **`JournalScreen`** — single public composable injecting `JournalViewModel` + `ShareHandler` via Koin. Branches on `entries.isEmpty()` to show either the `EmptyJournalMessage` or `JournalList`.
+- **`JournalList`** — `LazyColumn` with `key = { it.id }` and `Modifier.animateItem()` (11.5) on each item for smooth insertion/removal animations.
+- **`SwipeToDeleteRow`** — `SwipeToDismissBox(enableDismissFromStartToEnd=false, enableDismissFromEndToStart=true)`. Deletion triggered by `LaunchedEffect(dismissState.currentValue)` comparing to `EndToStart` — avoids the deprecated `confirmValueChange` callback.
+- **`DeleteBackground`** — `animateColorAsState` from `colorScheme.background → colorScheme.error` as drag begins, gives "expanding red" effect. Delete icon + "Delete" label appear when `dismissDirection == EndToStart`.
+- **`JournalEntryRow`** — Row with `weight(1f)` column (card name + formatted timestamp), Share `IconButton` (right), full-row `clickable` → `navController.navigate(AppRoutes.Details(...))`.
+- **Timestamp formatting** — manual month/hour/AM-PM logic using `kotlinx.datetime.Instant.toLocalDateTime(TimeZone.currentSystemDefault())`. `@file:Suppress("DEPRECATION")` added since `kotlinx.datetime.Instant` is a deprecated typealias in 0.6.x (→ `kotlin.time.Instant`); the extension `toLocalDateTime` doesn't yet resolve correctly off the stdlib type directly.
+- **`AppModule`** — `viewModel { JournalViewModel(get(), get()) }` added.
+- **`HomeScreen`** — Journal tab branch replaced with `JournalScreen(navController, Modifier.padding(innerPadding))`.
+- Build verified — Android ✅ iOS Simulator ✅ — 31 unit tests green
+- Committed as `feat: Phase 11 — Journal screen…` (4c183d2)
+
+---
+
+*End of Session 12*
