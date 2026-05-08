@@ -868,3 +868,34 @@ All 5 model files created under `commonMain/.../data/model/`. Key design decisio
 ---
 
 *End of Session 13*
+
+---
+
+## Session 14 — May 7, 2026
+
+### User Input
+
+> Implement Phase 13, adding the respective keywords as chips between the card rectangle and the meaning text
+
+### Decisions & Implementation
+
+**`DetailsViewModel` (13.1):**
+- `cardId: Int` and `isReversed: Boolean` received via Koin `parametersOf` — avoids `SavedStateHandle` in KMP `commonMain` (13.3 fulfilled: nav args are wired from `AppNavHost.backStackEntry.toRoute()` → `DetailsScreen` params → `koinViewModel(parameters = { parametersOf(cardId, isReversed) })`).
+- `cardMeaning: StateFlow<CardMeaning?>` via `flow { emit(getCardMeaningUseCase(cardId)) }.stateIn(WhileSubscribed)`. Initial value `null` = loading indicator.
+
+**`DetailsScreen` full implementation (13.2):**
+- **Loading state**: `CircularProgressIndicator` centred while `cardMeaning == null`.
+- **`AnimatedVisibility(fadeIn)`** wraps the content column once the meaning resolves.
+- **Card name heading**: `headlineMedium`, `colorScheme.primary`, "(Reversed)" suffix if `isReversed`.
+- **`CardPlaceholder`**: 180×315dp `Surface` (standard tarot 1:1.75 ratio), `primary` border, `surfaceVariant` fill, `cardName` centred. `Modifier.graphicsLayer { rotationZ = if (isReversed) 180f else 0f }` applies the full visual flip to both box and text.
+- **`KeywordSection`** (user request): "Keywords" `labelMedium` label + `FlowRow` of `SuggestionChip`s placed **between the card box and meaning text**. Chips use `primaryContainer / onPrimaryContainer` colours so they automatically inherit the Mystical (gold-brown) or Inferno (dark-crimson) palette. Shows `keywords` when upright, `keywordsReversed` when reversed.
+- **`HorizontalDivider`** separates keyword chips from the meaning paragraph.
+- **`MeaningText`**: "Upright Meaning" / "Reversed Meaning" `labelMedium` label + `bodyMedium` paragraph.
+- **`AppModule`**: `viewModel { params -> DetailsViewModel(params.get(), params.get(), get()) }` with `viewModelOf` import added.
+
+- Build verified — Android ✅ iOS Simulator ✅ — 31 unit tests green
+- Committed as `feat: Phase 13 — Details screen…` (febf678)
+
+---
+
+*End of Session 14*
