@@ -899,3 +899,40 @@ All 5 model files created under `commonMain/.../data/model/`. Key design decisio
 ---
 
 *End of Session 14*
+
+---
+
+## Session 15 — May 7, 2026
+
+### User Input
+
+> Go ahead with Phase 14
+
+### Decisions & Implementation
+
+Phase 14 was a targeted 3-file edit — the auto-save call was already present in `onLongPressEnd()` from Phase 10, but it discarded the `Result` and emitted no snackbar event.
+
+**`HomeUiState.kt`:**
+- Added `data object AutoSaved : SnackbarEvent` — distinct from `SavedToJournal` so the snackbar message reads "Auto-saved to journal ✓" instead of "Saved to journal ✓". This keeps the user informed without blurring manual vs automatic saves.
+
+**`HomeViewModel.onLongPressEnd()` (14.1 + 14.2):**
+- Was: `saveJournalEntryUseCase(pulled)` with the result silently discarded.
+- Now:
+  ```kotlin
+  if (_uiState.value.autoSaveEnabled) {
+      val result = saveJournalEntryUseCase(pulled)
+      val event = if (result.isSuccess) SnackbarEvent.AutoSaved else SnackbarEvent.SaveError
+      _uiState.update { it.copy(snackbarEvent = event) }
+  }
+  ```
+  On failure, `SaveError` fires — user can tap "Save to journal" manually.
+
+**`HomeScreen.kt`:**
+- The exhaustive `when` over `SnackbarEvent` required a new `AutoSaved` branch (Kotlin sealed-interface exhaustiveness enforces this at compile time). Added: `SnackbarEvent.AutoSaved -> "Auto-saved to journal ✓"`.
+
+- Build verified — Android ✅ iOS Simulator ✅ — 31 unit tests green
+- Committed as `feat: Phase 14 — auto-save with snackbar feedback` (e66a956)
+
+---
+
+*End of Session 15*
