@@ -1,62 +1,77 @@
 package com.luissedan0.onecardtarotpull.ui.home
 
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import com.luissedan0.onecardtarotpull.ui.navigation.AppRoutes
 import com.luissedan0.onecardtarotpull.ui.navigation.BottomNavItem
 import com.luissedan0.onecardtarotpull.ui.navigation.BottomNavigationBar
+import org.koin.compose.viewmodel.koinViewModel
 
 /**
- * Host screen for the two in-screen tabs (PullCard / Journal).
+ * Root screen composable that owns the Scaffold, bottom nav, and
+ * orchestrates between the PullCard and Journal tabs.
  *
- * Scaffold layout:
- * - topBar    → [HomeTopBar]: title reflects selected tab; menu opens overflow
- * - bottomBar → [BottomNavigationBar]: switches between tabs
- * - content   → [PullCardTab] or [JournalTab] based on [selectedTab]
+ * ### Responsibilities
+ * - Injects [HomeViewModel] via Koin
+ * - Observes [HomeUiState] and propagates to [PullCardTab]
+ * - Handles one-shot [SnackbarEvent]s via [LaunchedEffect]
+ * - Hosts [HomeTopBar] (title tracks active tab) and [BottomNavigationBar]
  *
- * Back-press behaviour:
- * - If Journal tab is active, pressing back returns to PullCard tab.
- * - If PullCard is already active, the system handles back (exits the app).
- *
- * TODO Phase 10 & 11: Replace placeholder content boxes with real tab composables
- *   and wire HomeViewModel / JournalViewModel via koinViewModel().
+ * TODO Phase 11: Replace the Journal tab placeholder with JournalTab(koinViewModel()).
  */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(navController: NavController) {
+    val viewModel: HomeViewModel = koinViewModel()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
     var selectedTab by rememberSaveable { mutableStateOf<BottomNavItem>(BottomNavItem.PullCard) }
     val snackbarHostState = remember { SnackbarHostState() }
 
-    // TODO Phase 14 (Polish): Add BackHandler so Android's hardware back-press
-    //   returns to PullCard when Journal is active, rather than exiting the app.
-    //   Use expect/actual: androidMain wraps androidx.activity.compose.BackHandler,
-    //   iosMain is a no-op (iOS has no root back gesture at the tab level).
+    // Consume one-shot snackbar events from the ViewModel.
+    LaunchedEffect(uiState.snackbarEvent) {
+        val event = uiState.snackbarEvent ?: return@LaunchedEffect
+        val message = when (event) {
+            SnackbarEvent.SavedToJournal -> "Saved to journal ✓"
+            SnackbarEvent.SaveError      -> "Could not save — please try again"
+        }
+        snackbarHostState.showSnackbar(message)
+        viewModel.consumeSnackbarEvent()
+    }
+
+    // TODO Phase 14 (Polish): BackHandler — when Journal is active, back → PullCard
+    //   instead of exiting. Use expect/actual (androidMain wraps activity BackHandler,
+    //   iosMain no-op).
 
     Scaffold(
         topBar = {
             HomeTopBar(
                 title = selectedTab.label,
-                onSettingsClick = { navController.navigate(AppRoutes.Settings) }
+                onHowToUse = { /* passed to menu below */ },
+                onSettings = { navController.navigate(AppRoutes.Settings) }
             )
         },
         bottomBar = {
@@ -67,19 +82,24 @@ fun HomeScreen(navController: NavController) {
         },
         snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { innerPadding ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding),
-            contentAlignment = Alignment.Center
-        ) {
-            when (selectedTab) {
-                BottomNavItem.PullCard -> {
-                    // TODO Phase 10: PullCardTab(navController, snackbarHostState, koinViewModel())
-                    Text("Pull a Card — coming in Phase 10")
-                }
-                BottomNavItem.Journal -> {
-                    // TODO Phase 11: JournalTab(navController, koinViewModel())
+        when (selectedTab) {
+            BottomNavItem.PullCard -> PullCardTab(
+                uiState = uiState,
+                onLongPressStart = viewModel::onLongPressStart,
+                onLongPressEnd = viewModel::onLongPressEnd,
+                onCardLongPress = viewModel::onCardLongPress,
+                onSaveToJournal = viewModel::saveToJournal,
+                onLearnMore = { cardId, isReversed ->
+                    navController.navigate(AppRoutes.Details(cardId, isReversed))
+                },
+                modifier = Modifier.padding(innerPadding)
+            )
+            BottomNavItem.Journal -> {
+                // TODO Phase 11: JournalTab(navController, koinViewModel(), Modifier.padding(innerPadding))
+                androidx.compose.foundation.layout.Box(
+                    modifier = Modifier.padding(innerPadding),
+                    contentAlignment = androidx.compose.ui.Alignment.Center
+                ) {
                     Text("Journal — coming in Phase 11")
                 }
             }
@@ -87,25 +107,123 @@ fun HomeScreen(navController: NavController) {
     }
 }
 
+// ─── Top App Bar ─────────────────────────────────────────────────────────────
+
 /**
  * Top app bar for [HomeScreen].
  *
- * [title] switches between "Pull a Card" and "Journal" as tabs change.
- * The trailing icon opens the overflow menu (How to use / Settings).
+ * The [title] switches between "Pull a Card" and "Journal" as the active tab changes.
+ * The trailing three-dot icon opens [HomeMenu].
  *
- * TODO Phase 10A: Replace stub with full HomeTopBar including DropdownMenu.
+ * @param title         Current tab label.
+ * @param onHowToUse    Action for the "How to use" menu item.
+ * @param onSettings    Action for the "Settings" menu item.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeTopBar(
     title: String,
-    onSettingsClick: () -> Unit
+    onHowToUse: () -> Unit,
+    onSettings: () -> Unit
 ) {
+    var showMenu by remember { mutableStateOf(false) }
+    var showHowToUseDialog by remember { mutableStateOf(false) }
+
     TopAppBar(
-        title = { Text(title) },
+        title = {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleLarge
+            )
+        },
         actions = {
-            IconButton(onClick = onSettingsClick) {
-                Icon(Icons.Default.MoreVert, contentDescription = "Menu")
+            IconButton(onClick = { showMenu = true }) {
+                Icon(
+                    imageVector = Icons.Default.MoreVert,
+                    contentDescription = "Menu"
+                )
+            }
+            HomeMenu(
+                expanded = showMenu,
+                onDismiss = { showMenu = false },
+                onHowToUse = {
+                    showMenu = false
+                    showHowToUseDialog = true
+                    onHowToUse()
+                },
+                onSettings = {
+                    showMenu = false
+                    onSettings()
+                }
+            )
+        }
+    )
+
+    if (showHowToUseDialog) {
+        HowToUseDialog(onDismiss = { showHowToUseDialog = false })
+    }
+}
+
+// ─── Overflow Menu ────────────────────────────────────────────────────────────
+
+/**
+ * Material3 [DropdownMenu] with "How to use" and "Settings" items.
+ *
+ * @param expanded   Whether the menu is currently visible.
+ * @param onDismiss  Called when the menu should close without action.
+ * @param onHowToUse Called when "How to use" is tapped.
+ * @param onSettings Called when "Settings" is tapped.
+ */
+@Composable
+private fun HomeMenu(
+    expanded: Boolean,
+    onDismiss: () -> Unit,
+    onHowToUse: () -> Unit,
+    onSettings: () -> Unit
+) {
+    DropdownMenu(
+        expanded = expanded,
+        onDismissRequest = onDismiss
+    ) {
+        DropdownMenuItem(
+            text = { Text("How to use") },
+            onClick = onHowToUse
+        )
+        DropdownMenuItem(
+            text = { Text("Settings") },
+            onClick = onSettings
+        )
+    }
+}
+
+// ─── How To Use Dialog ────────────────────────────────────────────────────────
+
+/**
+ * Simple [AlertDialog] explaining the pull interaction.
+ *
+ * TODO Phase 14 (Polish): Replace placeholder text with real instructions and
+ *   consider a custom illustrated dialog using a ModalBottomSheet.
+ *
+ * @param onDismiss Called when the user taps "Close" or taps outside the dialog.
+ */
+@Composable
+private fun HowToUseDialog(onDismiss: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("How to use") },
+        text = {
+            Text(
+                text = "Long-press the card to begin shuffling the deck.\n\n" +
+                       "Release to reveal your card.\n\n" +
+                       "Long-press the revealed card to return it to the deck.\n\n" +
+                       "Tap \"Learn more\" for the full card meaning, or " +
+                       "\"Save to journal\" to keep a record of your pull.",
+                style = MaterialTheme.typography.bodyMedium
+            )
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Close")
             }
         }
     )

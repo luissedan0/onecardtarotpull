@@ -61,9 +61,10 @@ kotlin {
             // Navigation (KMP)
             implementation(libs.navigation.compose)
 
-            // Koin — DI core + Compose integration
+            // Koin — DI core + Compose integration + Compose ViewModel
             implementation(libs.koin.core)
             implementation(libs.koin.compose)
+            implementation(libs.koin.compose.viewmodel)
 
             // Room (KMP) + SQLite bundled driver (required for iOS)
             implementation(libs.room.runtime)

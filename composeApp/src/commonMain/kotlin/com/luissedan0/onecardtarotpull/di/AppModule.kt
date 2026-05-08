@@ -21,6 +21,8 @@ import com.luissedan0.onecardtarotpull.domain.usecase.GetSettingsUseCase
 import com.luissedan0.onecardtarotpull.domain.usecase.PullCardUseCase
 import com.luissedan0.onecardtarotpull.domain.usecase.SaveJournalEntryUseCase
 import com.luissedan0.onecardtarotpull.domain.usecase.UpdateSettingsUseCase
+import com.luissedan0.onecardtarotpull.ui.home.HomeViewModel
+import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
 /**
@@ -80,7 +82,16 @@ val appModule = module {
     factory { UpdateSettingsUseCase(get()) }
 
     // ── ViewModels ────────────────────────────────────────────────────────────
-    // Declared in Phases 10–13 when the Screen + ViewModel files are created.
-    // Pattern: viewModel { HomeViewModel(get(), get(), get(), get()) }
-    // Usage in Composables: val viewModel: HomeViewModel = koinViewModel()
+
+    /**
+     * [HomeViewModel] — pull-card state machine, auto-save observation, haptic feedback.
+     *
+     * `HapticFeedback` is resolved from the platform module (androidModule / iosModule).
+     * All use-case `get()` calls resolve from the factory bindings above.
+     */
+    viewModel { HomeViewModel(get(), get(), get(), get()) }
+
+    // JournalViewModel  → Phase 11
+    // SettingsViewModel → Phase 12 / 13
+    // DetailsViewModel  → Phase 12
 }
