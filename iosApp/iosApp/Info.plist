@@ -4,5 +4,11 @@
 <dict>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
+	<!-- Required by PHPickerViewController (iOS 14+) when accessing the full photo library.
+	     PHPicker itself does NOT require this key for the system picker UI, but
+	     NSPhotoLibraryUsageDescription is needed if the app ever accesses PHAsset directly.
+	     Included here for App Store compliance and future-proofing. -->
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>OneCardTarotPull uses your photo library to let you set a custom card back image.</string>
 </dict>
 </plist>
