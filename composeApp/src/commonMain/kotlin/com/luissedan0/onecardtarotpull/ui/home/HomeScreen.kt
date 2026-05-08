@@ -2,6 +2,7 @@ package com.luissedan0.onecardtarotpull.ui.home
 
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import com.luissedan0.onecardtarotpull.ui.journal.JournalScreen
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenu
@@ -94,15 +95,10 @@ fun HomeScreen(navController: NavController) {
                 },
                 modifier = Modifier.padding(innerPadding)
             )
-            BottomNavItem.Journal -> {
-                // TODO Phase 11: JournalTab(navController, koinViewModel(), Modifier.padding(innerPadding))
-                androidx.compose.foundation.layout.Box(
-                    modifier = Modifier.padding(innerPadding),
-                    contentAlignment = androidx.compose.ui.Alignment.Center
-                ) {
-                    Text("Journal — coming in Phase 11")
-                }
-            }
+            BottomNavItem.Journal -> JournalScreen(
+                navController = navController,
+                modifier = Modifier.padding(innerPadding)
+            )
         }
     }
 }

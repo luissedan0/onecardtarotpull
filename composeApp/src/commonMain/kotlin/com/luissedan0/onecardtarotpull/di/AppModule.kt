@@ -22,6 +22,7 @@ import com.luissedan0.onecardtarotpull.domain.usecase.PullCardUseCase
 import com.luissedan0.onecardtarotpull.domain.usecase.SaveJournalEntryUseCase
 import com.luissedan0.onecardtarotpull.domain.usecase.UpdateSettingsUseCase
 import com.luissedan0.onecardtarotpull.ui.home.HomeViewModel
+import com.luissedan0.onecardtarotpull.ui.journal.JournalViewModel
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
@@ -91,7 +92,9 @@ val appModule = module {
      */
     viewModel { HomeViewModel(get(), get(), get(), get()) }
 
-    // JournalViewModel  → Phase 11
+    /** [JournalViewModel] — live Room list + delete action. */
+    viewModel { JournalViewModel(get(), get()) }
+
     // SettingsViewModel → Phase 12 / 13
     // DetailsViewModel  → Phase 12
 }
